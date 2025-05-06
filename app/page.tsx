@@ -11,7 +11,6 @@ import axios from "axios";
 
 export default function Home() {
     const wallet = useAnchorWallet();
-    const [ refresh, setRefresh] = useState(0);
     const [ isLoading, setIsLoading ] = useState(true);
     const [ userModel, setUserModel ] = useState<UserType | null>(null);
 
@@ -23,9 +22,11 @@ export default function Home() {
                 const res = await axios.get(`/api/users?address=${wallet!.publicKey}`);
                 setUserModel(res.data);
             } 
-            catch(error){
-                console.error('Error fetching user data:', error);
-                toaster.create({ title: "Unable to retreve data... ", type: "error" })
+            catch(error: any){
+                if(error.status == 500){
+                    console.error('Error fetching user data:', error);
+                    toaster.create({ title: "Unable to retreve data... ", type: "error" })
+                }
             }
             finally{
                 setIsLoading(false);
@@ -36,7 +37,7 @@ export default function Home() {
         if(wallet){
             fetchData();
         }
-    }, [wallet, refresh]);
+    }, [wallet]);
 
     const renderComponent = () => {
         if (isLoading) {
@@ -49,10 +50,10 @@ export default function Home() {
         }
 
         if (userModel) {
-            return <GameBox address={wallet!.publicKey} userModel={userModel}/>
+            return <GameBox userModel={userModel}/>
         }
 
-        return <SignUp address={wallet!.publicKey}/>
+        return <SignUp address={wallet!.publicKey} setUserModel={setUserModel}/>
     }
 
     return (

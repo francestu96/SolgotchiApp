@@ -27,7 +27,7 @@ export function Providers(props: ThemeProviderProps) {
             new SolflareWalletAdapter(),
             new PhantomWalletAdapter(),
             new TrustWalletAdapter(),
-            new WalletConnectWalletAdapter({ network, options: { metadata: { name: "SolEscrow", description: "SolEscrow", url: "", icons: [] } } }),
+            new WalletConnectWalletAdapter({ network, options: { metadata: { name: "Solgotchi", description: "Solgotchi", url: "", icons: [] } } }),
             new XDEFIWalletAdapter()
         ],
         [network]

@@ -1,4 +1,4 @@
-import User from "@/utils/user";
+import User, { UserType } from "@/utils/user";
 import dbConnect from "@/utils/dbConnect";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -17,17 +17,28 @@ export async function GET(req: NextRequest) {
 
     const referees = await User.find({ referral: address });
     referees.forEach((referee) => {
-        user.bluePoints += Math.floor(referee.bluePoints / 100);
+        user.tokens += Math.floor(referee.tokens / 100);
     });
-
-    user.bluePoints -= user.bluePointsSpent;
-    user.goldPoints -= user.goldPointsSpent;
-
-    return NextResponse.json({ address: user.address, username: user.username, referral: user.referral, bluePoints: user.bluePoints, goldPoints: user.goldPoints, pet: user.pet });
+    return NextResponse.json(user);
 }
 
 export async function POST(req: NextRequest) {
     await dbConnect();
+
+    const action = req.nextUrl.searchParams.get('action');
+    if(action === "update"){
+        const userModel: UserType = await req.json();
+        
+        const referees = await User.find({ referral: userModel.address });
+        referees.forEach((referee) => {
+            userModel.tokens -= Math.floor(referee.tokens / 100);
+        });
+
+        console.log("Updating user model with:", userModel);
+
+        await User.findByIdAndUpdate(userModel._id, userModel);
+        return NextResponse.json({ message: "User updated" });
+    }
 
     const address = req.nextUrl.searchParams.get('address');
     const { username, referral } = await req.json();
@@ -39,23 +50,25 @@ export async function POST(req: NextRequest) {
         address,
         username,
         referral,
-        bluePoints: 0,
-        bluePointsSpent: 0,
-        goldPoints: 0,
-        goldPointsSpent: 0,
-        multiplier: 1,
+        tokens: 0,
+        gold: 0,
+        exp: 0,
+        level: 1,
         pet: {
             hunger: 100,
-            higiene: 100,
+            hygiene: 100,
             energy: 100,
             fun: 100
         }
     });
 
     try{
-        newUser.save();
+        await newUser.save();
     }
     catch (err: any) {
+        if(err.toString().includes("E11000 duplicate key error collection")){
+            return NextResponse.json({ error: "Username already in use" }, { status: 409 });
+        }
         console.error(err.toString());
         return NextResponse.json({ error: err.toString() }, { status: 500 });
     }

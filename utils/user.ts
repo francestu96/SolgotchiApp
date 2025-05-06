@@ -15,32 +15,58 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    bluePoints: {
+    tokens: {
         type: Number,
         required: true,
     },
-    bluePointsSpent: {
+    gold: {
         type: Number,
         required: true,
     },
-    goldPoints: {
+    exp: {
         type: Number,
         required: true,
     },
-    goldPointsSpent: {
+    level: {
         type: Number,
         required: true,
     },
-    multiplier: {
+    highScore: {
         type: Number,
         required: true,
     },
+    activeWallpaperId: {
+        type: String,
+        required: false,
+    },
+    activeClothId: {
+        type: String,
+        required: false,
+    },
+    inventory: [{
+            id: {
+                type: String,
+                required: false,
+            },
+            quantity: {
+                type: Number,
+                required: true,
+            }
+    }],
     pet: {
+        name: {
+            type: String,
+            required: false,
+        },
+        isLightOn: {
+            type: Boolean,
+            required: true,
+        },
         hunger: {
             type: Number,
             required: true,
         },
-        higiene: {
+        hygiene: {
             type: Number,
             required: true,
         },
@@ -59,18 +85,27 @@ const User = mongoose.models.User || mongoose.model("User", UserSchema);
 export default User;
 
 export type UserType = {
+    _id: string,
     address: string,
     username: string,
     referral: string,
-    bluePoints: string,
-    bluePointsSpent: string,
-    goldPoints: string,
-    goldPointsSpent: string,
-    multiplier: string,
+    tokens: number,
+    gold: number,
+    exp: number,
+    level: number,
+    highScore: number,
+    activeWallpaperId: string,
+    activeClothId: string,
+    inventory: {
+            id: string,
+            quantity: number,
+    }[],
     pet: {
-        hunger: string,
-        higiene: string,
-        energy: string,
-        fun: string
+        name: string,
+        isLightOn: boolean,
+        hunger: number,
+        hygiene: number,
+        energy: number,
+        fun: number
     }
 }
