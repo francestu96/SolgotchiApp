@@ -54,11 +54,13 @@ export async function POST(req: NextRequest) {
         gold: 0,
         exp: 0,
         level: 1,
+        highScore: 0,
         pet: {
-            hunger: 100,
-            hygiene: 100,
-            energy: 100,
-            fun: 100
+            isLightOn: true,
+            hunger: 10000,
+            hygiene: 10000,
+            energy: 10000,
+            fun: 10000
         }
     });
 
