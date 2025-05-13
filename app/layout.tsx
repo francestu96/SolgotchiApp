@@ -14,6 +14,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1, orientation=landscape"/>
+            </head>
             <body>
                 <Providers>
                     <Toaster />

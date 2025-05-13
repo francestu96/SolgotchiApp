@@ -5,8 +5,9 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { Unity, useUnityContext } from "react-unity-webgl";
 import { toaster } from "@/app/components/Toaster"
-import { VStack } from "@chakra-ui/react";
+import { Button, Icon, VStack } from "@chakra-ui/react";
 import { UserType } from "@/utils/user";
+import { FaExpandAlt } from 'react-icons/fa';
 
 export const GameBox = ({ userModel }: { userModel: UserType }) => {
     const { unityProvider, sendMessage, addEventListener, removeEventListener, isLoaded } = useUnityContext({
@@ -150,43 +151,13 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
     }, []);
 
     const unityStyle = useMemo(() => {
-        if (isLandscape) {
+        if (isMobile && isLandscape) {
             return { width: "85vw", height: "80vh" };
         } 
         else {
             return { width: "85%" };
         }
-        // if (!isMobile){
-        //     return { width: "85%" };
-        // }
-        // else if (isLandscape) {
-        //     return { width: "85vw", height: "80vh" };
-        // } 
-        // else {
-        //     return {
-        //         width: "55vh",
-        //         height: "80vw",
-        //         transform: "rotate(90deg)",
-        //         transformOrigin: "center center",
-        //     }
-        // }
     }, [isMobile, isLandscape]);
-
-    // const containerStyle = useMemo(() => {
-    //     if (!isMobile || isLandscape) {
-    //         return {}
-    //     }
-    //     else {
-    //         return { 
-    //             display: "flex",
-    //             justifyContent: "center",
-    //             alignItems: "center",
-    //             width: "80%",
-    //             height: "60vh",
-    //             overflow: "hidden",
-    //         };
-    //     }
-    // }, [isMobile, isLandscape]);
 
     const onTokensBought = useCallback((tokensCount: any, tokenPrice: any) => {
         const handleTokensBought = async () => {
@@ -221,9 +192,38 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
         });
     }, []);
 
+    function toggleFullscreenLandscape() {
+         const canvas = document.querySelector('canvas');
+
+        if (!document.fullscreenElement) {
+            canvas!.requestFullscreen().then(() => {
+                if (screen.orientation && (screen.orientation as any).lock) {
+                    (screen.orientation as any).lock('landscape').catch((err: any) => {
+                        console.error('Fullscreen lock error:', err);
+                        alert("Device not supported, rotate manually");
+                    });
+                }
+            }).catch(err => {
+                console.error('Fullscreen:', err);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+}
+
     return (
-        <VStack alignContent="center" py="10" >
+        <VStack alignContent="center" py="10">
             <Unity unityProvider={unityProvider} style={unityStyle} /> 
+            {
+                isMobile && (
+                    <Button mt="2" onClick={toggleFullscreenLandscape} size="sm" fontSize="xs">
+                        Enter fullscreen
+                        <Icon size="xs">
+                            <FaExpandAlt width="10px" height="10px"/>
+                        </Icon>
+                    </Button>
+                )
+            }
         </VStack>
     );
 }
