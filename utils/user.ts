@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema({
     },
     referral: {
         type: String,
-        required: true,
+        required: false,
     },
     tokens: {
         type: Number,

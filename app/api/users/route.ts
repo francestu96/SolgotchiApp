@@ -46,6 +46,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Address and username required" }, { status: 400 });
     }
 
+    if(referral){
+        const referrer = await User.findOne({ address: referral });
+        if(!referrer){
+            return NextResponse.json({ error: "Referral not found" }, { status: 422 });
+        }
+    }
+
     const newUser = new User({
         address,
         username,

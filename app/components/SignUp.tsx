@@ -9,7 +9,8 @@ export const SignUp = ({ address, setUserModel }: { address: PublicKey, setUserM
     const [referral, setReferral] = useState<string | null>();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [requiredError, setRequiredError] = useState<boolean>(false);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [usernameError, setUsernameError] = useState<string | null>(null);
+    const [referralError, setReferralError] = useState<string | null>(null);
 
     const signUp = async () => {
         setIsLoading(true);
@@ -20,10 +21,17 @@ export const SignUp = ({ address, setUserModel }: { address: PublicKey, setUserM
             }
             catch (err: any) {
                 if(err.status == 409){
-                    setErrorMessage(err.response.data.error);
+                    setUsernameError(err.response.data.error);
+                    setReferralError(null);
+                }
+                else if(err.status == 422){
+                    setReferralError(err.response.data.error);
+                    setUsernameError(null);
                 }
                 else {
-                    toaster.create({ title: err.response.data.error, type: "error" })
+                    toaster.create({ title: err.response.data.error, type: "error" });
+                    setUsernameError(null);
+                    setReferralError(null);
                 }
             }
         }
@@ -36,7 +44,7 @@ export const SignUp = ({ address, setUserModel }: { address: PublicKey, setUserM
 
     return (
         <Box w={["100%", "90%", "80%"]} borderRadius='lg' display="flex" p={["10", "15", "20"]} mx="auto">
-            <Stack w="100%" alignItems="center" bgColor="#2D3748" borderRadius="xl" border="1px solid gray">
+            <Stack w="100%" alignItems="center" bgColor="#2D3748" borderRadius="xl" border="1px solid gray" color="white">
                 <Box mt={["-2em", "-3em", "-4em"]} height={["6em", "7em", "8em"]}>
                     <Image alt="" m="auto" w="40%" src="/logo.png"/>
                 </Box>
@@ -46,19 +54,20 @@ export const SignUp = ({ address, setUserModel }: { address: PublicKey, setUserM
                 </Stack>
                 <Separator mb="2" borderColor='#00ABB8' width="90%"/>
                 <Stack mb="10" mt="2">
-                    <Field.Root required invalid={errorMessage ? true : false}>
+                    <Field.Root required invalid={usernameError ? true : false}>
                         <Field.Label>
                             Username
                             <Field.RequiredIndicator />
                         </Field.Label>
                         <Input placeholder="Your username..." onChange={(e) => {setUsername(e.target.value); setRequiredError(false)}} borderColor={requiredError ? "red" : "inherit"}/>
-                        <Field.ErrorText>{errorMessage}</Field.ErrorText>
+                        <Field.ErrorText>{usernameError}</Field.ErrorText>
                     </Field.Root>
-                    <Field.Root mb="3">
+                    <Field.Root mb="3" invalid={referralError ? true : false}>
                         <Field.Label>
                             Referral
                         </Field.Label>
                         <Input placeholder="Referral address..." onChange={(e) => setReferral(e.target.value)}/>
+                        <Field.ErrorText>{referralError}</Field.ErrorText>
                     </Field.Root>
 
                     <Button onClick={signUp} loading={isLoading}>Get Started!</Button>
