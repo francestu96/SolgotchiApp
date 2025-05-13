@@ -150,37 +150,43 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
     }, []);
 
     const unityStyle = useMemo(() => {
-        if (!isMobile){
-            return { width: "85%" };
-        }
-        else if (isLandscape) {
+        if (isLandscape) {
             return { width: "85vw", height: "80vh" };
         } 
         else {
-            return {
-                width: "55vh",
-                height: "80vw",
-                transform: "rotate(90deg)",
-                transformOrigin: "center center",
-            }
+            return { width: "85%" };
         }
+        // if (!isMobile){
+        //     return { width: "85%" };
+        // }
+        // else if (isLandscape) {
+        //     return { width: "85vw", height: "80vh" };
+        // } 
+        // else {
+        //     return {
+        //         width: "55vh",
+        //         height: "80vw",
+        //         transform: "rotate(90deg)",
+        //         transformOrigin: "center center",
+        //     }
+        // }
     }, [isMobile, isLandscape]);
 
-    const containerStyle = useMemo(() => {
-        if (!isMobile || isLandscape) {
-            return {}
-        }
-        else {
-            return { 
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                width: "80%",
-                height: "60vh",
-                overflow: "hidden",
-            };
-        }
-    }, [isMobile, isLandscape]);
+    // const containerStyle = useMemo(() => {
+    //     if (!isMobile || isLandscape) {
+    //         return {}
+    //     }
+    //     else {
+    //         return { 
+    //             display: "flex",
+    //             justifyContent: "center",
+    //             alignItems: "center",
+    //             width: "80%",
+    //             height: "60vh",
+    //             overflow: "hidden",
+    //         };
+    //     }
+    // }, [isMobile, isLandscape]);
 
     const onTokensBought = useCallback((tokensCount: any, tokenPrice: any) => {
         const handleTokensBought = async () => {
@@ -216,7 +222,7 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
     }, []);
 
     return (
-        <VStack alignContent="center" py="10" style={containerStyle}>
+        <VStack alignContent="center" py="10" >
             <Unity unityProvider={unityProvider} style={unityStyle} /> 
         </VStack>
     );

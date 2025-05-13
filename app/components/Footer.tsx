@@ -16,7 +16,7 @@ const ListHeader = ({ children }: { children: ReactNode }) => {
 export default function Footer() {
     return (
         <Stack bgColor={"main"} color={'gray.200'} borderTop="1px solid" borderBottomColor="gray.400" as={Stack} width="100%" py={10} alignItems="center" minH="24.4vh">
-            <SimpleGrid templateColumns={{ sm: '1fr 1fr', md: '2fr 1fr 1fr 2fr' }} justifyItems="center" width="60%">
+            <SimpleGrid templateColumns={{ sm: '1fr 1fr', md: '2fr 1fr 1fr 2fr' }} justifyItems="center" width="60%" gap="5">
                 <Stack>
                     <HStack gap="3">
                         <Link href="/">
@@ -47,18 +47,18 @@ export default function Footer() {
                         </Link>
                     </Stack>
                 </Stack>
-                <Stack align={'flex-start'}>
+                <Stack width="100%" gap="0">
                     <ListHeader>Support</ListHeader>
                     <Link href={AppConfig.telegramURL}>Telegram</Link>
                     <Link href={AppConfig.discordURL}>Discord</Link>
                     <Link href={AppConfig.xURL}>x.com</Link>
                 </Stack>
-                <Stack align={'flex-start'}>
+                <Stack width="100%"  gap="0">
                     <ListHeader>Developer</ListHeader>
                     <Text>Powered By</Text>
                     <Link href={'https://t.me/justinternetmoneyz'} target='_blank' style={{ color: "#e29543" }} rel="noreferrer">Kira</Link>
                 </Stack>
-                <Stack align={'flex-start'}>
+                <Stack width="100%"  gap="0">
                     <ListHeader>Stay up to date</ListHeader>
                     <Stack direction={'row'}>
                         <Input placeholder={'Your email address'} bg={'whiteAlpha.100'} border={0} _focus={{ bg: 'whiteAlpha.300' }} />
