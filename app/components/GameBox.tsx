@@ -2,12 +2,12 @@
 
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { Unity, useUnityContext } from "react-unity-webgl";
 import { toaster } from "@/app/components/Toaster"
 import { Button, Icon, VStack } from "@chakra-ui/react";
 import { UserType } from "@/utils/user";
-import { FaExpandAlt } from 'react-icons/fa';
+import { FaCompressAlt, FaExpandAlt, FaTimes } from 'react-icons/fa';
 
 export const GameBox = ({ userModel }: { userModel: UserType }) => {
     const { unityProvider, sendMessage, addEventListener, removeEventListener, isLoaded } = useUnityContext({
@@ -20,14 +20,16 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
     const [isMobile, setIsMobile] = useState(false);
     const { connection } = useConnection();
     const { publicKey, sendTransaction } = useWallet();
+    const unityCanvasRef = useRef<HTMLDivElement>(null);
+    const originalStylesRef = useRef<Record<string, string>>({});
+    const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
-    useEffect(() => {
-        const checkMobile = () => {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        };
-        
-        setIsMobile(checkMobile());
-    }, []);
+    const unityStyle = {
+        width: '100%',
+        height: '600px',
+        background: '#231F20',
+    };
 
     useEffect(() => {
         const mediaQuery = window.matchMedia("(orientation: landscape)");
@@ -40,6 +42,12 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
         
         mediaQuery.addEventListener("change", handleOrientationChange);
         
+        const checkMobile = () => {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        };
+        
+        setIsMobile(checkMobile());
+        
         return () => {
             mediaQuery.removeEventListener("change", handleOrientationChange);
         };
@@ -48,8 +56,6 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
     useEffect(() => {
         if (userModel && isLoaded) {
             window.addEventListener('unload', onUnload);
-
-            console.log("Sending user info to Unity:", userModel);
 
             addEventListener("onTokensBought", onTokensBought);
             addEventListener("onPetNameChange", onPetNameChange);
@@ -69,7 +75,6 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
             addEventListener("onRemoveItem", onRemoveItem);
 
             sendMessage("GameStartupManager", "ReceiveInitData", JSON.stringify(userModel));
-            console.log("Sending user info to Unity:", userModel);
 
             return () => {
                 window.removeEventListener('unload', onUnload);
@@ -95,9 +100,41 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
 
     }, [userModel, isLoaded, addEventListener]);
 
+    useEffect(() => {
+        return () => {
+            if (isFullscreen) {
+                exitFullscreen();
+            }
+        };
+    }, [isFullscreen]);
+    
+    useEffect(() => {
+        const handleOrientationChange = () => {
+            if (isFullscreen) {
+                setTimeout(() => updateCanvasOrientation(), 300);
+            }
+        };
+        
+        window.addEventListener('orientationchange', handleOrientationChange);
+        window.addEventListener('resize', handleOrientationChange);
+        
+        return () => {
+            window.removeEventListener('orientationchange', handleOrientationChange);
+            window.removeEventListener('resize', handleOrientationChange);
+        };
+    }, [isFullscreen]);
+    
+
     const onUnload = useCallback(() => {
         const blob = new Blob([JSON.stringify(userModel)], { type: 'application/json' });
-        navigator.sendBeacon("/api/users?action=update", blob);
+        fetch("/api/users?action=update", {
+            method: "POST",
+            body: blob,
+            headers: {
+                "Content-Type": "application/octet-stream",
+            },
+            keepalive: true
+        });
     }, []);
     const onPetNameChange = useCallback((petName: any) => {
         userModel.pet.name = petName;
@@ -150,15 +187,6 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
         userModel.inventory = userModel.inventory.filter(item => item.id !== itemId);
     }, []);
 
-    const unityStyle = useMemo(() => {
-        if (isMobile && isLandscape) {
-            return { width: "85vw", height: "80vh" };
-        } 
-        else {
-            return { width: "85%" };
-        }
-    }, [isMobile, isLandscape]);
-
     const onTokensBought = useCallback((tokensCount: any, tokenPrice: any) => {
         const handleTokensBought = async () => {
             const lamports = Math.ceil(LAMPORTS_PER_SOL * tokenPrice * tokensCount);
@@ -191,35 +219,153 @@ export const GameBox = ({ userModel }: { userModel: UserType }) => {
             toaster.create({ title: "Transaction failed", type: "error" });
         });
     }, []);
-
-    function toggleFullscreenLandscape() {
-         const canvas = document.querySelector('canvas');
-
-        if (!document.fullscreenElement) {
-            canvas!.requestFullscreen().then(() => {
-                if (screen.orientation && (screen.orientation as any).lock) {
-                    (screen.orientation as any).lock('landscape').catch((err: any) => {
-                        console.error('Fullscreen lock error:', err);
-                        alert("Device not supported, rotate manually");
-                    });
-                }
-            }).catch(err => {
-                console.error('Fullscreen:', err);
-            });
-        } else {
-            document.exitFullscreen();
+    
+    const updateCanvasOrientation = useCallback(() => {
+        if (!unityCanvasRef.current) return;
+        
+        const canvas = unityCanvasRef.current.querySelector('canvas');
+        if (!canvas) return;
+        
+        canvas.style.transform = '';
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+    }, []);
+      
+    const saveOriginalStyles = useCallback((canvas: HTMLElement) => {
+        originalStylesRef.current = {
+            position: canvas.style.position,
+            top: canvas.style.top,
+            left: canvas.style.left,
+            width: canvas.style.width,
+            height: canvas.style.height,
+            zIndex: canvas.style.zIndex,
+            transform: canvas.style.transform
+        };
+    }, []);
+    
+    const addCloseButton = useCallback(() => {
+        if (closeButtonRef.current && document.body.contains(closeButtonRef.current)) {
+            alert("Tap the button to exit fullscreen");
+            document.body.removeChild(closeButtonRef.current);
         }
-}
+
+        const button = document.createElement('button');
+        button.id = 'unity-exit-fullscreen-button';
+        
+        Object.assign(button.style, {
+            position: 'fixed',
+            bottom: '15px',
+            right: '15px',
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            color: 'white',
+            fontSize: '10px',
+            border: '3px solid white',
+            cursor: 'pointer',
+            zIndex: '100000',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 0 10px rgba(0,0,0,0.5)',
+            padding: '0',
+            fontWeight: 'bold',
+            userSelect: 'none',
+            touchAction: 'manipulation'
+        });
+        
+        button.onclick = exitFullscreen;
+        const container = document.createElement('div');
+        container.id = 'close-button-icon';
+        button.appendChild(container);
+
+        document.body.appendChild(button);
+        closeButtonRef.current = button;
+
+        // Monta l'icona React nel container usando ReactDOM
+        import('react-dom/client').then(ReactDOMClient => {
+            const root = ReactDOMClient.createRoot(container);
+            root.render(<FaTimes size={16} color="white" />);
+        });
+        // button.ontouchend = (e) => {
+        //     e.preventDefault();
+        //     exitFullscreen();
+        // };
+        
+        // document.body.appendChild(button);
+        // closeButtonRef.current = button;
+    }, []);
+    
+    const enterFullscreen = useCallback(() => {
+        if (!unityCanvasRef.current) return;
+        
+        const canvas = unityCanvasRef.current.querySelector('canvas');
+        if (!canvas) return;
+        
+        saveOriginalStyles(canvas);
+        
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.zIndex = '9999';
+        
+        canvas.classList.add('fullscreen-mode');
+        
+        document.body.style.overflow = 'hidden';
+        
+        updateCanvasOrientation();
+        
+        setIsFullscreen(true);
+
+        addCloseButton();
+    }, [saveOriginalStyles, updateCanvasOrientation, addCloseButton]);
+    
+    const exitFullscreen = useCallback(() => {
+        if (!unityCanvasRef.current) return;
+        
+        const canvas = unityCanvasRef.current.querySelector('canvas');
+        if (!canvas) return;
+        canvas.classList.remove('fullscreen-mode');
+        
+        Object.entries(originalStylesRef.current).forEach(([prop, value]) => {
+            (canvas.style as any)[prop] = value || '';
+        });
+        
+        document.body.style.overflow = '';
+        
+        if (closeButtonRef.current && document.body.contains(closeButtonRef.current)) {
+            document.body.removeChild(closeButtonRef.current);
+            closeButtonRef.current = null;
+        }
+        
+        setIsFullscreen(false);
+    }, []);
+    
+    const toggleFullscreenLandscape = useCallback(() => {
+        if (isFullscreen) {
+            exitFullscreen();
+        } else {
+            enterFullscreen();
+        }
+    }, [isFullscreen, enterFullscreen, exitFullscreen]);
 
     return (
         <VStack alignContent="center" py="10">
-            <Unity unityProvider={unityProvider} style={unityStyle} /> 
+            <div ref={unityCanvasRef}>
+                <Unity unityProvider={unityProvider} style={unityStyle} />
+            </div>
             {
-                isMobile && (
-                    <Button mt="2" onClick={toggleFullscreenLandscape} size="sm" fontSize="xs">
+                isMobile && !isFullscreen && (
+                    <Button onClick={toggleFullscreenLandscape} mt="2" size="sm" fontSize="xs">
                         Enter fullscreen
-                        <Icon size="xs">
-                            <FaExpandAlt width="10px" height="10px"/>
+                        <Icon>
+                            <FaExpandAlt />
                         </Icon>
                     </Button>
                 )
