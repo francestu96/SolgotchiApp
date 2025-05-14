@@ -35,7 +35,7 @@ export function Providers(props: ThemeProviderProps) {
 
     return (
         <ChakraProvider value={system}>
-            <ThemeProvider attribute="class" disableTransitionOnChange {...props}>
+            <ThemeProvider forcedTheme="dark" attribute="class" disableTransitionOnChange {...props}>
                 <ConnectionProvider endpoint={endpoint}>
                     <WalletProvider wallets={wallets} autoConnect>
                         <WalletModalProvider>

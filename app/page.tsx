@@ -58,7 +58,7 @@ export default function Home() {
 
     return (
         <Box bgColor="#1A202C" bgImage="url(/background.png)" bgSize="cover">
-            <Container maxW="container.xl" minH="65vh">
+            <Container maxW="container.xl" minH={["40vh", "50vh", "65vh"]}>
                 {
                     wallet ? (
                         renderComponent()
